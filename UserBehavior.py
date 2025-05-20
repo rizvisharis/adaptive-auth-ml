@@ -1,3 +1,4 @@
+import joblib
 import requests
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -51,3 +52,5 @@ model_pipeline.fit(X_train, y_train)
 y_pred = model_pipeline.predict(X_test)
 print("Behavior Model Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
+
+joblib.dump(model_pipeline, 'behavior_model.pkl')
