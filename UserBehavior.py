@@ -4,9 +4,12 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.compose import ColumnTransformer
 
 # Step 1: Fetch data
@@ -15,18 +18,22 @@ response = requests.get('http://localhost:8080/api/training-data-behavior')
 if response.status_code == 200:
     data = response.json()
     df = pd.DataFrame(data)
-    print(df.head())
+    print("Sample data:\n", df.head())
 else:
     raise Exception(f"Failed to fetch data: {response.status_code}")
 
-# Step 2: Drop non-feature columns
+# Step 2: Encode target label (email as user ID)
+le = LabelEncoder()
+y = le.fit_transform(df['email'])  # Encode email to numeric labels
 X = df.drop(['email'], axis=1)
-y = df['email']
 
-# Step 3: Identify all feature columns (assume all numeric for now)
+# Optional: save label encoder
+joblib.dump(le, 'behavior_label_encoder.pkl')
+
+# Step 3: Identify numeric features
 numeric_features = X.columns.tolist()
 
-# Step 4: Preprocessing for numeric features
+# Step 4: Define preprocessing pipeline for numeric data
 numeric_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='mean')),
     ('scaler', StandardScaler())
@@ -38,19 +45,41 @@ preprocess_pipeline = ColumnTransformer(
     ]
 )
 
-# Step 5: Build the full pipeline
-model_pipeline = Pipeline([
-    ('preprocess', preprocess_pipeline),
-    ('classifier', RandomForestClassifier(n_estimators=150, random_state=42))
-])
+# Step 5: Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-# Step 6: Split and train
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model_pipeline.fit(X_train, y_train)
+# Step 6: Define models to evaluate
+models = {
+    'RandomForest': RandomForestClassifier(n_estimators=150, random_state=42),
+    'XGBoost': XGBClassifier(eval_metric='mlogloss', random_state=42),
+    'SVM': SVC(probability=True, kernel='rbf'),
+    'KNN': KNeighborsClassifier()
+}
 
-# Step 7: Predict and evaluate
-y_pred = model_pipeline.predict(X_test)
-print("Behavior Model Accuracy:", accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred))
+# Step 7: Train and evaluate each model
+best_model = None
+best_score = 0
+best_model_name = ""
 
-joblib.dump(model_pipeline, 'behavior_model.pkl')
+for name, clf in models.items():
+    pipeline = Pipeline([
+        ('preprocess', preprocess_pipeline),
+        ('classifier', clf)
+    ])
+    print(f"\nTraining {name}...")
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    print(f"{name} Accuracy: {acc:.4f}")
+    print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+    if acc > best_score:
+        best_score = acc
+        best_model = pipeline
+        best_model_name = name
+
+# Step 8: Save best model
+print(f"\n✅ Best Model: {best_model_name} with Accuracy: {best_score:.4f}")
+joblib.dump(best_model, 'best_behavior_model.pkl')
