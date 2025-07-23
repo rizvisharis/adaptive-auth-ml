@@ -9,7 +9,7 @@ behavior_model = joblib.load('best_behavior_model.pkl')
 context_model = joblib.load('best_context_model.pkl')
 
 # Load label encoders
-behavior_encoder = joblib.load('label_encoder.pkl')
+behavior_encoder = joblib.load('behavior_label_encoder.pkl')
 context_encoder = joblib.load('context_label_encoder.pkl')
 
 @app.route('/api/auth-score', methods=['POST'])
