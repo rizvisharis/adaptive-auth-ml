@@ -41,9 +41,10 @@ def auth_score():
         p_context = prob_context[i_c]
 
         # Weighted combination
-        w_behavior = 0.6
-        w_context = 0.4
+        w_behavior = 0.5
+        w_context = 0.5
         combined_prob = w_behavior * p_behavior + w_context * p_context
+        print(combined_prob)
 
         # Determine next auth step
         if combined_prob >= 0.80:

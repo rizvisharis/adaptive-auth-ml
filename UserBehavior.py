@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.compose import ColumnTransformer
+from sklearn.utils.multiclass import unique_labels
 
 # Step 1: Fetch data
 response = requests.get('http://localhost:8080/api/training-data-behavior')
@@ -73,7 +74,8 @@ for name, clf in models.items():
     y_pred = pipeline.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     print(f"{name} Accuracy: {acc:.4f}")
-    print(classification_report(y_test, y_pred, target_names=le.classes_))
+    labels = unique_labels(y_test, y_pred)
+    print(classification_report(y_test, y_pred, labels=labels, target_names=le.classes_[labels]))
 
     if acc > best_score:
         best_score = acc
