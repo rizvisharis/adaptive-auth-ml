@@ -33,7 +33,8 @@ joblib.dump(le, 'context_label_encoder.pkl')
 cat_attribs = [
     'browser_name', 'browser_version', 'user_agent',
     'color_depth', 'canvas_fingerprint', 'os',
-    'cpu_class', 'resolution'
+    'cpu_class', 'resolution', 'ip', 'country_name',
+    'country_code', 'region', 'city'
 ]
 
 # Step 4: Preprocessing pipeline
