@@ -44,7 +44,7 @@ def auth_score():
         w_behavior = 0.5
         w_context = 0.5
         combined_prob = w_behavior * p_behavior + w_context * p_context
-        print(combined_prob)
+        print(f"Risk Score: {combined_prob * 100:.2f}%")
 
         # Determine next auth step
         if combined_prob >= 0.80:
